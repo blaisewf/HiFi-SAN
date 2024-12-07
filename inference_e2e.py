@@ -10,17 +10,10 @@ from scipy.io.wavfile import write
 from env import AttrDict
 from meldataset import MAX_WAV_VALUE
 from models import Generator
-
+from utils import load_checkpoint
 h = None
 device = None
 
-
-def load_checkpoint(filepath, device):
-    assert os.path.isfile(filepath)
-    print("Loading '{}'".format(filepath))
-    checkpoint_dict = torch.load(filepath, map_location=device)
-    print("Complete.")
-    return checkpoint_dict
 
 
 def scan_checkpoint(cp_dir, prefix):
