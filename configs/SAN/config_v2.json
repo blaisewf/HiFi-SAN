@@ -10,7 +10,7 @@
 
     "upsample_rates": [8,8,2,2],
     "upsample_kernel_sizes": [16,16,4,4],
-    "upsample_initial_channel": 512,
+    "upsample_initial_channel": 128,
     "resblock_kernel_sizes": [3,7,11],
     "resblock_dilation_sizes": [[1,3,5], [1,3,5], [1,3,5]],
 
@@ -33,5 +33,7 @@
         "dist_backend": "nccl",
         "dist_url": "tcp://localhost:54321",
         "world_size": 1
-    }
+    },
+    
+    "discriminator_type": "SAN"
 }
