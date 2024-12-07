@@ -1,14 +1,15 @@
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
-from torch.nn import Conv1d, ConvTranspose1d, AvgPool1d, Conv2d
-from torch.nn.utils import weight_norm, remove_weight_norm, spectral_norm
+from torch.nn import Conv1d, ConvTranspose1d, AvgPool1d, Conv2d, Module
+from torch.nn.utils.parametrizations import weight_norm
+from torch.nn.utils import remove_weight_norm, spectral_norm
 from utils import init_weights, get_padding
 
 LRELU_SLOPE = 0.1
 
 
-class ResBlock1(torch.nn.Module):
+class ResBlock1(Module):
     def __init__(self, h, channels, kernel_size=3, dilation=(1, 3, 5)):
         super(ResBlock1, self).__init__()
         self.h = h
@@ -100,7 +101,7 @@ class ResBlock1(torch.nn.Module):
             remove_weight_norm(l)
 
 
-class ResBlock2(torch.nn.Module):
+class ResBlock2(Module):
     def __init__(self, h, channels, kernel_size=3, dilation=(1, 3)):
         super(ResBlock2, self).__init__()
         self.h = h
@@ -142,7 +143,7 @@ class ResBlock2(torch.nn.Module):
             remove_weight_norm(l)
 
 
-class Generator(torch.nn.Module):
+class Generator(Module):
     def __init__(self, h):
         super(Generator, self).__init__()
         self.h = h
@@ -212,7 +213,7 @@ def _normalize(tensor, dim):
     return tensor / denom
 
 
-class SANConv2d(torch.nn.Conv2d):
+class SANConv2d(Conv2d):
 
     def __init__(
         self,

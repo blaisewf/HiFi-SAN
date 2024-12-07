@@ -28,7 +28,7 @@ from utils import plot_spectrogram, scan_checkpoint, load_checkpoint, save_check
 torch.backends.cudnn.benchmark = True
 
 
-def train(rank, a, h):
+def train(rank, a, h, checkpoint_path):
     if h.num_gpus > 1:
         init_process_group(
             backend=h.dist_config["dist_backend"],
@@ -45,13 +45,12 @@ def train(rank, a, h):
     msd = MultiScaleDiscriminator().to(device)
 
     if rank == 0:
-        print(generator)
-        os.makedirs(a.checkpoint_path, exist_ok=True)
-        print("checkpoints directory : ", a.checkpoint_path)
+        # print(generator)
+        os.makedirs(checkpoint_path, exist_ok=True)
 
-    if os.path.isdir(a.checkpoint_path):
-        cp_g = scan_checkpoint(a.checkpoint_path, "g_")
-        cp_do = scan_checkpoint(a.checkpoint_path, "do_")
+    if os.path.isdir(checkpoint_path):
+        cp_g = scan_checkpoint(checkpoint_path, "g_")
+        cp_do = scan_checkpoint(checkpoint_path, "do_")
 
     steps = 0
     if cp_g is None or cp_do is None:
@@ -152,7 +151,7 @@ def train(rank, a, h):
             drop_last=True,
         )
 
-        sw = SummaryWriter(os.path.join(a.checkpoint_path, "logs"))
+        sw = SummaryWriter(os.path.join(checkpoint_path, "tensorboard"))
 
     generator.train()
     mpd.train()
@@ -228,15 +227,11 @@ def train(rank, a, h):
                     with torch.no_grad():
                         mel_error = F.l1_loss(y_mel, y_g_hat_mel).item()
 
-                    print(
-                        "Steps : {:d}, Gen Loss Total : {:4.3f}, Mel-Spec. Error : {:4.3f}, s/b : {:4.3f}".format(
-                            steps, loss_gen_all, mel_error, time.time() - start_b
-                        )
-                    )
+                    print(f"* Steps: {steps}/{len(train_loader) * (epoch + 1)} | Gen Loss (Total): {loss_gen_all:.3f} | Mel-Spec. Error: {mel_error:.3f} | s/b: {time.time() - start_b:.3f}")
 
                 # checkpointing
                 if steps % a.checkpoint_interval == 0 and steps != 0:
-                    checkpoint_path = "{}/g_{:08d}".format(a.checkpoint_path, steps)
+                    checkpoint_path = "{}/g_{:08d}".format(checkpoint_path, steps)
                     save_checkpoint(
                         checkpoint_path,
                         {
@@ -245,7 +240,7 @@ def train(rank, a, h):
                             ).state_dict()
                         },
                     )
-                    checkpoint_path = "{}/do_{:08d}".format(a.checkpoint_path, steps)
+                    checkpoint_path = "{}/do_{:08d}".format(checkpoint_path, steps)
                     save_checkpoint(
                         checkpoint_path,
                         {
@@ -348,14 +343,13 @@ def main():
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--group_name", default=None)
+    parser.add_argument("--name", default="my-model")
     parser.add_argument("--input_wavs_dir", default="LJSpeech-1.1/wavs")
     parser.add_argument("--input_mels_dir", default="ft_dataset")
     parser.add_argument("--input_training_file", default="LJSpeech-1.1/training.txt")
     parser.add_argument(
         "--input_validation_file", default="LJSpeech-1.1/validation.txt"
     )
-    parser.add_argument("--checkpoint_path", default="cp_hifigan")
     parser.add_argument("--config", default="")
     parser.add_argument("--training_epochs", default=3100, type=int)
     parser.add_argument("--stdout_interval", default=5, type=int)
@@ -371,14 +365,14 @@ def main():
 
     json_config = json.loads(data)
     h = AttrDict(json_config)
-    build_env(a.config, "config.json", a.checkpoint_path)
+    checkpoint_path = os.path.join("logs", a.name)
+    build_env(a.config, "config.json", checkpoint_path)
 
     torch.manual_seed(h.seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed(h.seed)
         h.num_gpus = torch.cuda.device_count()
         h.batch_size = int(h.batch_size / h.num_gpus)
-        print("Batch size per GPU :", h.batch_size)
     else:
         pass
 
@@ -392,7 +386,7 @@ def main():
             ),
         )
     else:
-        train(0, a, h)
+        train(0, a, h, checkpoint_path)
 
 
 if __name__ == "__main__":

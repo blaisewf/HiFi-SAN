@@ -79,10 +79,10 @@ def mel_spectrogram(
         pad_mode="reflect",
         normalized=False,
         onesided=True,
+        return_complex=True,
     )
 
-    spec = torch.sqrt(spec.pow(2).sum(-1) + (1e-9))
-
+    spec = torch.sqrt(spec.real.pow(2) + spec.imag.pow(2) + 1e-6)
     spec = torch.matmul(mel_basis[str(fmax) + "_" + str(y.device)], spec)
     spec = spectral_normalize_torch(spec)
 
