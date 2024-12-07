@@ -457,8 +457,8 @@ class DiscriminatorP_GAN(torch.nn.Module):
 
 
 class MultiPeriodDiscriminator(torch.nn.Module):
-    def __init__(self):
-        super(MultiPeriodDiscriminator, self, type).__init__()
+    def __init__(self, type):
+        super(MultiPeriodDiscriminator, self).__init__()
         if type == "SAN":
             self.discriminators = nn.ModuleList(
                 [
