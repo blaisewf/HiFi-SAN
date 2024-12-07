@@ -231,18 +231,18 @@ def train(rank, a, h, checkpoint_path):
 
                 # checkpointing
                 if steps % a.checkpoint_interval == 0 and steps != 0:
-                    checkpoint_path = "{}/g_{:08d}".format(checkpoint_path, steps)
+                    checkpoint_path_1 = "{}/g_{:08d}".format(checkpoint_path, steps)
                     save_checkpoint(
-                        checkpoint_path,
+                        checkpoint_path_1,
                         {
                             "generator": (
                                 generator.module if h.num_gpus > 1 else generator
                             ).state_dict()
                         },
                     )
-                    checkpoint_path = "{}/do_{:08d}".format(checkpoint_path, steps)
+                    checkpoint_path_2 = "{}/do_{:08d}".format(checkpoint_path, steps)
                     save_checkpoint(
-                        checkpoint_path,
+                        checkpoint_path_2,
                         {
                             "mpd": (mpd.module if h.num_gpus > 1 else mpd).state_dict(),
                             "msd": (msd.module if h.num_gpus > 1 else msd).state_dict(),
